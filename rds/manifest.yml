@@ -1,0 +1,9 @@
+---
+applications:
+- name: cf-test-rds
+  env:
+    GOVERSION: go1.8.3
+    GOPACKAGENAME: github.com/ONSdigital/cf-tests/cf-test-rds
+    DB_SERVICENAME: test-psql
+  services:
+    - test-psql

@@ -2,6 +2,8 @@ package main
 
 import (
 	"database/sql"
+	"io/ioutil"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -42,6 +44,7 @@ func TestDAOQuery(t *testing.T) {
 }
 
 type FakeDAO struct {
+	Host        string
 	User        string
 	Password    string
 	DBName      string
@@ -52,7 +55,8 @@ type FakeDAO struct {
 	QueryError  error
 }
 
-func (f *FakeDAO) Open(user, password, dbName string) (*sql.DB, error) {
+func (f *FakeDAO) Open(host, user, password, dbName string) (*sql.DB, error) {
+	f.Host = host
 	f.User = user
 	f.Password = password
 	f.DBName = dbName
@@ -70,22 +74,60 @@ func (f *FakeDAO) QueryTable(_ *sql.DB, tableName string) (string, error) {
 	return f.Name, f.QueryError
 }
 
-func TestQuery(t *testing.T) {
+func setupFake() (*FakeDAO, Credentialiser) {
 	dao := &FakeDAO{}
-	os.Setenv("DB_USER", "foo")
-	os.Setenv("DB_PASSWORD", "bar")
-	os.Setenv("DB_NAME", "barfoo")
-	defer func() {
-		os.Unsetenv("DB_USER")
-		os.Unsetenv("DB_PASSWORD")
-		os.Unsetenv("DB_NAME")
-	}()
-	name, err := Query(dao, "test_data", "Fred")
+	vcap_services := `
+	{
+		"rds": [
+		  {
+			"credentials": {
+			  "db_name": "test_db",
+			  "host": "test_host",
+			  "password": "test_password",
+			  "uri": "you don't want to use this",
+			  "username": "test_user"
+			},
+			"label": "rds",
+			"name": "test-psql"
+		  }
+		]
+	}
+	`
+	os.Setenv("VCAP_SERVICES", vcap_services)
+	os.Setenv("VCAP_APPLICATION", "{}")
+	os.Setenv("DB_SERVICENAME", "test-psql")
+	return dao, &CFCredentialiser{}
+}
+
+func teardownFake() {
+	os.Unsetenv("VCAP_SERVICES")
+	os.Unsetenv("VCAP_APPLICATION")
+	os.Unsetenv("DB_SERVICENAME")
+}
+
+func TestQuery(t *testing.T) {
+	dao, creds := setupFake()
+	defer teardownFake()
+	name, err := Query(dao, creds, "test-psql", "test_data", "Fred")
 	require.NoError(t, err)
 	assert.Equal(t, "Fred", name)
-	assert.Equal(t, "foo", dao.User)
-	assert.Equal(t, "bar", dao.Password)
-	assert.Equal(t, "barfoo", dao.DBName)
+	assert.Equal(t, "test_host", dao.Host)
+	assert.Equal(t, "test_user", dao.User)
+	assert.Equal(t, "test_password", dao.Password)
+	assert.Equal(t, "test_db", dao.DBName)
 	assert.Equal(t, "test_data", dao.TableName)
 	assert.Equal(t, "Fred", dao.Name)
+}
+
+func TestWeb(t *testing.T) {
+	dao, creds := setupFake()
+	defer teardownFake()
+	w := httptest.NewRecorder()
+	handler := WebHandler(dao, creds, "test-psql", "test_data", "Fred")
+	req := httptest.NewRequest("GET", "http://x/", nil)
+	handler(w, req)
+	resp := w.Result()
+	body, _ := ioutil.ReadAll(resp.Body)
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, "RDS service is OK", string(body))
 }
