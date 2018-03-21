@@ -18,6 +18,7 @@ func TestDAOCreateTable(t *testing.T) {
 	defer db.Close()
 
 	mock.ExpectBegin()
+	mock.ExpectExec("DROP TABLE IF EXISTS test_data").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("CREATE TABLE test_data").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectExec("INSERT INTO test_data").WithArgs("Fred").WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()

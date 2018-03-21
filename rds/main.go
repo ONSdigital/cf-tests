@@ -116,6 +116,10 @@ func (PostgresDAO) CreateTable(db *sql.DB, tableName, name string) (err error) {
 
 	}()
 
+	if _, err = tx.Exec("DROP TABLE IF EXISTS " + tableName); err != nil {
+		return
+	}
+
 	if _, err = tx.Exec("CREATE TABLE " + tableName + "(name VARCHAR(30) primary key)"); err != nil {
 		return
 	}
