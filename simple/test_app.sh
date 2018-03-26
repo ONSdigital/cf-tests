@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-set -eu
+set -eux
 : ${SIMPLE_ENDPOINT:=https://cf-test-simple.apps.devtest.onsclofo.uk}
-curl -k "$SIMPLE_ENDPOINT"
+curl -s -k "$SIMPLE_ENDPOINT" | grep "Test app is OK"

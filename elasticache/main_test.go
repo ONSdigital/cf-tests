@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"io/ioutil"
+	"net/http/httptest"
 	"os"
 	"testing"
-	"net/http/httptest"
-	"io/ioutil"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type FakeDAO struct {
@@ -52,8 +53,9 @@ func setupFake() (*FakeDAO, CFCredentialiser) {
         "elasticache": [
           {
             "credentials": {
-              "password": "redis_password",
-              "uri": "redis_url"
+			  "host": "redis_host",
+			  "port": 6379,
+              "password": "redis_password"
             },
             "label": "elasticache",
             "name": "test-elasticache"
@@ -63,14 +65,14 @@ func setupFake() (*FakeDAO, CFCredentialiser) {
     `
 	os.Setenv("VCAP_SERVICES", vcap_services)
 	os.Setenv("VCAP_APPLICATION", "{}")
-	os.Setenv("ELASTICACHE_SERVICENAME", "test-elasticache")
+	os.Setenv("ELASTICACHE_SERVICE_NAME", "test-elasticache")
 	return dao, CFCredentialiser{}
 }
 
 func teardownFake() {
-    os.Unsetenv("VCAP_SERVICES")
-    os.Unsetenv("VCAP_APPLICATION")
-    os.Unsetenv("ELASTICACHE_SERVICENAME")
+	os.Unsetenv("VCAP_SERVICES")
+	os.Unsetenv("VCAP_APPLICATION")
+	os.Unsetenv("ELASTICACHE_SERVICENAME")
 }
 
 func TestElastiCacheConnectAndSet(t *testing.T) {
@@ -78,19 +80,19 @@ func TestElastiCacheConnectAndSet(t *testing.T) {
 	tester := NewTester(dao, creds)
 	err := tester.PerformTest("test-elasticache")
 	require.NoError(t, err)
-	assert.Equal(t, "redis_url", dao.URL)
+	assert.Equal(t, "redis_host:6379", dao.URL)
 	assert.Equal(t, "redis_password", dao.Password)
 }
 
 func TestWeb(t *testing.T) {
-    dao, creds := setupFake()
-    defer teardownFake()
-    w := httptest.NewRecorder()
-    handler := WebHandler(dao, creds)
-    req := httptest.NewRequest("GET", "http://x/", nil)
-    handler(w, req)
-    resp := w.Result()
-    body, _ := ioutil.ReadAll(resp.Body)
-    assert.Equal(t, 200, resp.StatusCode)
-    assert.Equal(t, "Elasticache service is OK", string(body))
+	dao, creds := setupFake()
+	defer teardownFake()
+	w := httptest.NewRecorder()
+	handler := WebHandler(dao, creds)
+	req := httptest.NewRequest("GET", "http://x/", nil)
+	handler(w, req)
+	resp := w.Result()
+	body, _ := ioutil.ReadAll(resp.Body)
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Equal(t, "Elasticache service is OK", string(body))
 }
