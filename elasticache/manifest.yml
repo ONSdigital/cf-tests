@@ -1,0 +1,9 @@
+---
+applications:
+- name: cf-test-elasticache
+  env:
+    GOVERSION: go1.8.3
+    GOPACKAGENAME: github.com/ONSdigital/cf-tests/cf-test-elasticache
+    ELASTICACHE_SERVICE_NAME: test-elasticache
+  services:
+    - test-elasticache

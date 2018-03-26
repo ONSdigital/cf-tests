@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
-	"github.com/go-redis/redis"
-	cfenv "github.com/cloudfoundry-community/go-cfenv"
-	"os"
 	"net/http"
+	"os"
+
+	cfenv "github.com/cloudfoundry-community/go-cfenv"
+	"github.com/go-redis/redis"
 )
 
 type DAO interface {
@@ -35,7 +36,7 @@ func NewTester(dao DAO, creds CFCredentialiser) *Tester {
 
 func WebHandler(dao DAO, creds CFCredentialiser) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		serviceName := os.Getenv("ELASTICACHE_SERVICENAME")
+		serviceName := os.Getenv("ELASTICACHE_SERVICE_NAME")
 		if err := NewTester(dao, creds).PerformTest(serviceName); err != nil {
 			w.WriteHeader(http.StatusFailedDependency)
 			fmt.Fprintf(w, "Failed to access ElastiCache: %v", err)
@@ -81,7 +82,9 @@ func (CFCredentialiser) GetCreds(serviceName string) (uri, password string, err 
 		return
 	}
 
-	uri, _ = pg.CredentialString("uri")
+	host, _ := pg.CredentialString("host")
+	port, _ := pg.Credentials["port"].(float64)
+	uri = fmt.Sprintf("%s:%0.0f", host, port)
 	password, _ = pg.CredentialString("password")
 
 	return
@@ -93,9 +96,9 @@ type RedisDAO struct {
 
 func (r *RedisDAO) Connect(uri, password string) error {
 	r.client = redis.NewClient(&redis.Options{
-		Addr: uri,
+		Addr:     uri,
 		Password: password,
-		DB: 0,
+		DB:       0,
 	})
 	_, err := r.client.Ping().Result()
 	return err

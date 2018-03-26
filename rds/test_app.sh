@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
-set -eu
+set -eux
 : ${RDS_ENDPOINT:=https://cf-test-rds.apps.devtest.onsclofo.uk}
-curl -k "$RDS_ENDPOINT"
+curl -s -k "$RDS_ENDPOINT" | grep "RDS service is OK"
