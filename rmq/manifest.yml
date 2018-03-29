@@ -1,0 +1,9 @@
+---
+applications:
+- name: cf-test-rmq
+  env:
+    GOVERSION: go1.8.3
+    GOPACKAGENAME: github.com/ONSdigital/cf-tests/cf-test-rmq
+    RMQ_SERVICENAME: test-rmq
+  services:
+    - test-rmq
