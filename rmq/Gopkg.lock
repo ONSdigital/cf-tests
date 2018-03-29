@@ -15,15 +15,6 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/lib/pq"
-  packages = [
-    ".",
-    "oid"
-  ]
-  revision = "b2004221932bd6b13167ef654c81cffac36f7537"
-
-[[projects]]
-  branch = "master"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
   revision = "00c29f56e2386353d58c599509e8dc3801b0d716"
@@ -35,6 +26,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/streadway/amqp"
+  packages = ["."]
+  revision = "8e4aba63da9fc5571e01c6a45dc809a58cbc5a68"
+
+[[projects]]
   name = "github.com/stretchr/testify"
   packages = [
     "assert",
@@ -43,15 +40,9 @@
   revision = "12b6f73e6084dad08a7c6e575284b177ecafbc71"
   version = "v1.2.1"
 
-[[projects]]
-  name = "gopkg.in/DATA-DOG/go-sqlmock.v1"
-  packages = ["."]
-  revision = "d76b18b42f285b792bf985118980ce9eacea9d10"
-  version = "v1.3.0"
-
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cf03f1ad311e8b3a66484ead9802eb191f6f38cfe6f7b6c1f665a49df5b8484d"
+  inputs-digest = "38b98691accae974865a4df3c4fa54486966aacf9069b792c56cb36a5d42524e"
   solver-name = "gps-cdcl"
   solver-version = 1
